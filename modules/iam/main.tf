@@ -125,3 +125,40 @@ resource "aws_iam_role_policy_attachment" "lbc_iam_role_policy_attach" {
   role       = aws_iam_role.lbc_iam_role.name
   policy_arn = aws_iam_policy.lbc_iam_policy.arn
 }
+
+
+######################  IRSA Flask backend retrieve secrets from AWS Secrets Manager ###########################################################
+resource "aws_iam_role" "flask_irsa" {
+  name = "eks-irsa-flask-backend"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [{
+      Effect = "Allow",
+      Principal = {
+        Federated = "${var.aws_iam_openid_connect_provider_arn}"
+      },
+      Action = "sts:AssumeRoleWithWebIdentity",
+      Condition = {
+        StringEquals = {
+          "${var.aws_iam_openid_connect_provider_extract_from_arn}:aud": "sts.amazonaws.com",            
+          "${var.aws_iam_openid_connect_provider_extract_from_arn}:sub": "system:serviceaccount:backend:flask-sa"
+        }
+      }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy" "flask_secret_access" {
+  name = "flask-secretsmanager-policy"
+  role = aws_iam_role.flask_irsa.id
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [{
+      Effect = "Allow",
+      Action = [
+        "secretsmanager:GetSecretValue"
+      ],
+      Resource = "*"
+    }]
+  })
+}

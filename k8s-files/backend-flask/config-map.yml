@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-config
+  namespace: backend
+data:
+  DB_HOST: "aurora-mysql-cluster.cluster-c7w2wae6s1qv.us-east-1.rds.amazonaws.com"
+  DB_PORT: "3306"
+  DB_NAME: "test"
+
+  
